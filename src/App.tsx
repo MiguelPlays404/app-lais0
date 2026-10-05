@@ -21,18 +21,36 @@ import { AdminPanel } from './components/AdminPanel';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { ReceiptModal } from './components/ReceiptModal';
 import { TikTokLogo } from './components/TikTokLogo';
+import { UserSelectScreen } from './components/UserSelectScreen';
+import { initAntiInspection } from './utils/security';
+import { ShieldAlert } from 'lucide-react';
 
 const WALLET_STORAGE_KEY = 'tiktok_wallet_balance_v3';
 const INITIAL_WALLET_BALANCE = 8000000; // 8 milhões de moedas
+const USER_SESSION_KEY = 'tiktok_active_user';
 
 export default function App() {
+  // Current logged in user ('lais' | 'livia' | null)
+  const [currentUser, setCurrentUser] = useState<'lais' | 'livia' | null>(() => {
+    try {
+      const saved = localStorage.getItem(USER_SESSION_KEY);
+      if (saved === 'lais' || saved === 'livia') return saved;
+    } catch (e) {
+      console.warn('Could not read saved user:', e);
+    }
+    return null;
+  });
+
   const [currentTab, setCurrentTab] = useState<'recharge' | 'admin'>('recharge');
   const [transactions, setTransactions] = useState<Transaction[]>(getCachedTransactions());
   
   // Rate: each coin is 0.12 dollars
   const [coinRateUsd, setCoinRateUsd] = useState<number>(0.12);
 
-  // Wallet balance: restored to 8 million
+  // Security toast notification
+  const [securityAlert, setSecurityAlert] = useState<string | null>(null);
+
+  // Wallet balance: initialized to 8 million and persisted across usage
   const [userSimulatedBalance, setUserSimulatedBalance] = useState<number>(() => {
     try {
       const saved = localStorage.getItem(WALLET_STORAGE_KEY);
@@ -60,6 +78,15 @@ export default function App() {
   const [isConfirmationOpen, setIsConfirmationOpen] = useState<boolean>(false);
   const [receiptTx, setReceiptTx] = useState<Transaction | null>(null);
   const [isReceiptOpen, setIsReceiptOpen] = useState<boolean>(false);
+
+  // Initialize anti-inspection guards (disables right-click, F12, DevTools shortcuts)
+  useEffect(() => {
+    const cleanup = initAntiInspection((reason) => {
+      setSecurityAlert(reason);
+      setTimeout(() => setSecurityAlert(null), 3000);
+    });
+    return cleanup;
+  }, []);
 
   // Validate connection to Firestore on initial boot
   useEffect(() => {
@@ -101,6 +128,20 @@ export default function App() {
     }
   }, [userSimulatedBalance]);
 
+  // Handle user select
+  const handleSelectUser = (user: 'lais' | 'livia') => {
+    setCurrentUser(user);
+    try {
+      localStorage.setItem(USER_SESSION_KEY, user);
+    } catch (e) {
+      console.warn('Could not save active user:', e);
+    }
+  };
+
+  const handleSwitchUser = () => {
+    setCurrentUser(null);
+  };
+
   // Secret code MMM reload handler
   const handleSecretReloadWallet = () => {
     setUserSimulatedBalance(8000000);
@@ -119,7 +160,7 @@ export default function App() {
         coins,
         usdRate: coinRateUsd,
         totalUsd,
-        senderName: 'Carteira Principal',
+        senderName: currentUser === 'livia' ? 'Lívia' : 'Laís',
         status: 'completed',
         note: note || '',
         createdAt: new Date().toISOString(),
@@ -157,7 +198,6 @@ export default function App() {
 
   // Delete transaction
   const handleDeleteTransaction = async (id: string) => {
-    // Immediately remove from state for instant UI responsiveness
     setTransactions((prev) => prev.filter(t => t.id !== id));
     try {
       await deleteTransaction(id);
@@ -193,11 +233,26 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // If no user selected yet, show the Login / User Select Screen with Password Verification
+  if (!currentUser) {
+    return <UserSelectScreen onSelectUser={handleSelectUser} />;
+  }
+
   return (
-    <div className="min-h-screen bg-[#0e0f14] text-neutral-100 flex flex-col font-sans selection:bg-[#FE2C55] selection:text-white">
+    <div className="min-h-screen bg-[#0e0f14] text-neutral-100 flex flex-col font-sans selection:bg-[#FE2C55] selection:text-white relative">
       
-      {/* Header with Eye toggle and 8 million balance */}
+      {/* Security alert toast when dev tools or right click is attempted */}
+      {securityAlert && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-neutral-900/95 border-2 border-amber-500/80 text-amber-300 text-xs font-bold shadow-2xl flex items-center gap-2 animate-in fade-in duration-200">
+          <ShieldAlert className="w-4 h-4 text-amber-400" />
+          <span>{securityAlert}</span>
+        </div>
+      )}
+
+      {/* Header with User Switcher, Eye toggle and 8 million balance */}
       <Header
+        currentUser={currentUser}
+        onSwitchUser={handleSwitchUser}
         currentTab={currentTab}
         onTabChange={setCurrentTab}
         totalTransactionsCount={transactions.length}
@@ -212,6 +267,7 @@ export default function App() {
       <main className="flex-1 pb-12">
         {currentTab === 'recharge' ? (
           <RechargeView
+            currentUser={currentUser}
             coinRateUsd={coinRateUsd}
             onConfirmRecharge={handleConfirmRecharge}
             isLoading={isLoading}
@@ -220,6 +276,7 @@ export default function App() {
           />
         ) : (
           <AdminPanel
+            currentUser={currentUser}
             transactions={transactions}
             coinRateUsd={coinRateUsd}
             onUpdateRate={(newRate) => setCoinRateUsd(newRate)}
@@ -249,30 +306,44 @@ export default function App() {
         transaction={receiptTx}
       />
 
-      {/* Simple Minimal Footer */}
+      {/* Simple Minimal Footer with Rights Reserved */}
       <footer className="bg-[#121212] border-t border-neutral-800/80 py-6 px-4 sm:px-6 text-neutral-400 text-xs">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           
           <div className="flex items-center gap-3">
             <TikTokLogo size={22} />
-            <span className="text-neutral-500">© {new Date().getFullYear()} TikTok</span>
+            <span className="text-neutral-500 font-medium">
+              © {new Date().getFullYear()} tiktokrecargapro • Todos os direitos reservados • Painel de {currentUser === 'livia' ? 'Lívia' : 'Laís'}
+            </span>
           </div>
 
           <div className="flex items-center gap-6 text-neutral-500 text-xs">
             <button 
               onClick={() => setCurrentTab('recharge')}
-              className={`hover:text-white transition-colors cursor-pointer ${currentTab === 'recharge' ? 'text-[#FE2C55] font-semibold' : ''}`}
+              className={`hover:text-white transition-colors cursor-pointer ${
+                currentTab === 'recharge' 
+                  ? (currentUser === 'livia' ? 'text-[#25F4EE] font-semibold' : 'text-[#FE2C55] font-semibold')
+                  : ''
+              }`}
             >
               Recarregar
             </button>
             <button 
               onClick={() => setCurrentTab('admin')}
-              className={`hover:text-white transition-colors cursor-pointer ${currentTab === 'admin' ? 'text-[#25F4EE] font-semibold' : ''}`}
+              className={`hover:text-white transition-colors cursor-pointer ${
+                currentTab === 'admin' 
+                  ? (currentUser === 'livia' ? 'text-[#FE2C55] font-semibold' : 'text-[#25F4EE] font-semibold')
+                  : ''
+              }`}
             >
               Painel Administrativo
             </button>
-            <span>Termos</span>
-            <span>Privacidade</span>
+            <button
+              onClick={handleSwitchUser}
+              className="hover:text-neutral-300 text-neutral-400 underline cursor-pointer"
+            >
+              Trocar de Usuário
+            </button>
           </div>
 
         </div>

@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 
 interface AdminPanelProps {
+  currentUser?: 'lais' | 'livia';
   transactions: Transaction[];
   coinRateUsd: number;
   onUpdateRate: (newRate: number) => void;
@@ -35,6 +36,7 @@ interface AdminPanelProps {
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
+  currentUser = 'lais',
   transactions,
   coinRateUsd,
   onUpdateRate,
@@ -45,6 +47,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onRepeatTransaction,
   onNewRecharge,
 }) => {
+  const isLivia = currentUser === 'livia';
+
   const [searchFilter, setSearchFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'pending' | 'cancelled'>('all');
   const [sortBy, setSortBy] = useState<'date_desc' | 'date_asc' | 'coins_desc'>('date_desc');
@@ -164,8 +168,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 p-4 rounded-xl bg-neutral-900 border-2 border-[#25F4EE] text-white shadow-2xl flex items-center gap-3 animate-in slide-in-from-top-4 duration-300">
-          <CheckCircle className="w-5 h-5 text-[#25F4EE] shrink-0" />
+        <div className={`fixed top-20 right-6 z-50 p-4 rounded-xl bg-neutral-900 border-2 text-white shadow-2xl flex items-center gap-3 animate-in slide-in-from-top-4 duration-300 ${
+          isLivia ? 'border-[#FE2C55]' : 'border-[#25F4EE]'
+        }`}>
+          <CheckCircle className={`w-5 h-5 shrink-0 ${isLivia ? 'text-[#FE2C55]' : 'text-[#25F4EE]'}`} />
           <span className="text-sm font-bold">{toastMessage}</span>
         </div>
       )}
@@ -174,11 +180,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-[#25F4EE]/10 border border-[#25F4EE]/30 text-[#25F4EE]">
+            <span className={`p-2 rounded-xl border ${
+              isLivia 
+                ? 'bg-[#FE2C55]/10 border-[#FE2C55]/30 text-[#FE2C55]' 
+                : 'bg-[#25F4EE]/10 border-[#25F4EE]/30 text-[#25F4EE]'
+            }`}>
               <LayoutDashboard className="w-5 h-5" />
             </span>
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Painel Administrativo
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-2">
+              <span>Painel Administrativo</span>
+              <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold uppercase ${
+                isLivia ? 'bg-[#25F4EE]/20 text-[#25F4EE]' : 'bg-[#FE2C55]/20 text-[#FE2C55]'
+              }`}>
+                {isLivia ? 'Lívia' : 'Laís'}
+              </span>
             </h1>
           </div>
           <p className="text-sm text-neutral-400 mt-1">
@@ -209,10 +224,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             <span>Exportar CSV</span>
           </button>
 
+          {/* Action button: Inverted color for Lívia */}
           <button
             type="button"
             onClick={onNewRecharge}
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FE2C55] to-[#E01740] hover:from-[#FF3B65] hover:to-[#F51846] text-white font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-[#FE2C55]/20 active:scale-95"
+            className={`px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer shadow-lg active:scale-95 ${
+              isLivia
+                ? 'bg-gradient-to-r from-[#25F4EE] to-[#00C8C8] hover:from-[#40FFFF] hover:to-[#12E5E5] text-neutral-950 shadow-[#25F4EE]/20'
+                : 'bg-gradient-to-r from-[#FE2C55] to-[#E01740] hover:from-[#FF3B65] hover:to-[#F51846] text-white shadow-[#FE2C55]/20'
+            }`}
           >
             <Plus className="w-4 h-4" />
             <span>Nova Recarga</span>
@@ -281,7 +301,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             <span>Cotação Unitária</span>
             <button
               onClick={() => setEditingRate(!editingRate)}
-              className="text-[#25F4EE] hover:underline text-xs flex items-center gap-1 cursor-pointer"
+              className={`hover:underline text-xs flex items-center gap-1 cursor-pointer ${
+                isLivia ? 'text-[#FE2C55]' : 'text-[#25F4EE]'
+              }`}
             >
               <Sliders className="w-3.5 h-3.5" />
               <span>{editingRate ? 'Fechar' : 'Ajustar'}</span>
@@ -290,7 +312,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
           {!editingRate ? (
             <>
-              <div className="text-2xl sm:text-3xl font-black text-[#25F4EE] mt-2">
+              <div className={`text-2xl sm:text-3xl font-black mt-2 ${
+                isLivia ? 'text-[#25F4EE]' : 'text-[#25F4EE]'
+              }`}>
                 {formatUSD(coinRateUsd)}
               </div>
               <div className="text-xs text-neutral-500 mt-1">
@@ -305,12 +329,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 min="0.01"
                 value={newRateInput}
                 onChange={(e) => setNewRateInput(e.target.value)}
-                className="w-24 px-2 py-1 bg-neutral-950 border border-[#25F4EE] rounded text-white text-sm font-bold"
+                className="w-24 px-2 py-1 bg-neutral-950 border border-neutral-700 rounded text-white text-sm font-bold"
               />
               <button
                 type="button"
                 onClick={handleSaveRate}
-                className="px-2.5 py-1 bg-[#25F4EE] text-neutral-950 font-bold rounded text-xs cursor-pointer"
+                className={`px-2.5 py-1 font-bold rounded text-xs cursor-pointer ${
+                  isLivia ? 'bg-[#FE2C55] text-white' : 'bg-[#25F4EE] text-neutral-950'
+                }`}
               >
                 Salvar
               </button>
@@ -331,7 +357,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
             placeholder="Buscar por @destinatário ou ID..."
-            className="w-full pl-10 pr-4 py-2 bg-neutral-950 border border-neutral-700/80 rounded-xl text-white text-sm placeholder-neutral-500 focus:outline-none focus:border-[#FE2C55]"
+            className={`w-full pl-10 pr-4 py-2 bg-neutral-950 border border-neutral-700/80 rounded-xl text-white text-sm placeholder-neutral-500 focus:outline-none ${
+              isLivia ? 'focus:border-[#25F4EE]' : 'focus:border-[#FE2C55]'
+            }`}
           />
         </div>
 
@@ -395,7 +423,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
       </div>
 
-      {/* Main Table: Showing ONLY the @handle in clear evidence */}
+      {/* Main Table */}
       <div className="bg-[#181818] rounded-2xl border border-neutral-800 overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -431,13 +459,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       key={tx.id}
                       className="hover:bg-neutral-850/60 transition-colors group"
                     >
-                      {/* Destinatário */}
+                      {/* Destinatário with inverted color on Lívia */}
                       <td className="py-4 px-4 sm:px-6">
                         <div className="flex items-center gap-2.5">
-                          <span className="p-1.5 rounded-lg bg-[#FE2C55]/10 text-[#FE2C55] border border-[#FE2C55]/30">
+                          <span className={`p-1.5 rounded-lg border ${
+                            isLivia
+                              ? 'bg-[#25F4EE]/10 text-[#25F4EE] border-[#25F4EE]/30'
+                              : 'bg-[#FE2C55]/10 text-[#FE2C55] border-[#FE2C55]/30'
+                          }`}>
                             <AtSign className="w-4 h-4" />
                           </span>
-                          <span className="font-black text-white text-base tracking-tight text-[#25F4EE]">
+                          <span className={`font-black text-base tracking-tight ${
+                            isLivia ? 'text-[#FE2C55]' : 'text-[#25F4EE]'
+                          }`}>
                             {tx.targetUsername}
                           </span>
                         </div>
@@ -490,7 +524,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         <div className="font-mono text-[10px] text-neutral-500">{tx.id}</div>
                       </td>
 
-                      {/* Ações: Receipt, Repeat, Delete (Matching user's screenshot exactly!) */}
+                      {/* Ações */}
                       <td className="py-4 px-4 sm:px-6 text-right">
                         <div className="flex items-center justify-end gap-2">
                           
@@ -504,17 +538,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                             <ReceiptText className="w-4 h-4 text-neutral-200" />
                           </button>
 
-                          {/* 2. Repeat Icon Button (Refazer transação) */}
+                          {/* 2. Repeat Icon Button */}
                           <button
                             type="button"
                             onClick={() => onRepeatTransaction(tx)}
                             title="Refazer esta transação de moedas"
-                            className="p-2.5 rounded-xl bg-neutral-900 hover:bg-[#FE2C55]/20 text-neutral-300 hover:text-[#FE2C55] border border-neutral-800 hover:border-[#FE2C55]/40 transition-all cursor-pointer shadow-sm active:scale-95"
+                            className={`p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 transition-all cursor-pointer shadow-sm active:scale-95 ${
+                              isLivia
+                                ? 'hover:bg-[#25F4EE]/20 text-neutral-300 hover:text-[#25F4EE] hover:border-[#25F4EE]/40'
+                                : 'hover:bg-[#FE2C55]/20 text-neutral-300 hover:text-[#FE2C55] hover:border-[#FE2C55]/40'
+                            }`}
                           >
                             <Repeat2 className="w-4 h-4" />
                           </button>
 
-                          {/* 3. Delete Icon Button (Excluir transação) */}
+                          {/* 3. Delete Icon Button */}
                           <button
                             type="button"
                             onClick={() => setTxToDelete(tx)}
@@ -535,7 +573,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         </div>
       </div>
 
-      {/* IN-DOM MODAL: Confirm Delete Transaction (Replaces window.confirm) */}
+      {/* IN-DOM MODAL: Confirm Delete Transaction */}
       {txToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="w-full max-w-md bg-[#181818] border border-neutral-700 rounded-2xl p-6 shadow-2xl space-y-4">
@@ -553,7 +591,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             </div>
 
             <p className="text-sm text-neutral-300">
-              Tem certeza que deseja apagar a transação de <strong className="text-[#25F4EE]">{txToDelete.targetUsername}</strong> no valor de <strong className="text-amber-400">{formatNumber(txToDelete.coins)} moedas</strong> ({formatUSD(txToDelete.totalUsd)})?
+              Tem certeza que deseja apagar a transação de <strong className={isLivia ? 'text-[#FE2C55]' : 'text-[#25F4EE]'}>{txToDelete.targetUsername}</strong> no valor de <strong className="text-amber-400">{formatNumber(txToDelete.coins)} moedas</strong> ({formatUSD(txToDelete.totalUsd)})?
             </p>
 
             <div className="flex items-center justify-end gap-2.5 pt-2">

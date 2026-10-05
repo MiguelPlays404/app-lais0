@@ -2,9 +2,11 @@ import React from 'react';
 import { TikTokLogo } from './TikTokLogo';
 import { TikTokCoin } from './TikTokCoin';
 import { formatNumber, formatUSD } from '../utils/formatters';
-import { LayoutDashboard, Send, Eye, EyeOff } from 'lucide-react';
+import { LayoutDashboard, Send, Eye, EyeOff, User, ArrowLeftRight } from 'lucide-react';
 
 interface HeaderProps {
+  currentUser: 'lais' | 'livia';
+  onSwitchUser: () => void;
   currentTab: 'recharge' | 'admin';
   onTabChange: (tab: 'recharge' | 'admin') => void;
   totalTransactionsCount: number;
@@ -16,6 +18,8 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
+  currentUser,
+  onSwitchUser,
   currentTab,
   onTabChange,
   totalTransactionsCount,
@@ -25,12 +29,14 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleBalanceVisibility,
   isFirebaseConnected,
 }) => {
+  const isLivia = currentUser === 'livia';
+
   return (
     <header className="sticky top-0 z-40 bg-[#121212]/95 backdrop-blur-md border-b border-neutral-800 text-white shadow-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
         
         {/* Logo and Brand */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4 sm:gap-6">
           <button 
             onClick={() => onTabChange('recharge')}
             className="flex items-center gap-2 cursor-pointer transition-transform hover:opacity-95"
@@ -39,13 +45,36 @@ export const Header: React.FC<HeaderProps> = ({
             <TikTokLogo size={36} />
           </button>
 
+          {/* User Profile Badge with Quick Switch */}
+          <div className="flex items-center gap-2 pl-2 border-l border-neutral-800">
+            <div className={`px-2.5 py-1 rounded-xl text-xs font-black flex items-center gap-1.5 border shadow-sm ${
+              isLivia
+                ? 'bg-[#25F4EE]/15 border-[#25F4EE]/40 text-[#25F4EE]'
+                : 'bg-[#FE2C55]/15 border-[#FE2C55]/40 text-[#FE2C55]'
+            }`}>
+              <User className="w-3.5 h-3.5" />
+              <span>{isLivia ? 'Lívia' : 'Laís'}</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={onSwitchUser}
+              className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
+              title="Trocar de Usuário (Laís / Lívia)"
+            >
+              <ArrowLeftRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
           {/* Desktop Navigation Tabs */}
           <nav className="hidden md:flex items-center space-x-1 bg-neutral-900/80 p-1 rounded-xl border border-neutral-800">
             <button
               onClick={() => onTabChange('recharge')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
                 currentTab === 'recharge'
-                  ? 'bg-gradient-to-r from-[#FE2C55] to-[#E01740] text-white shadow-md'
+                  ? isLivia
+                    ? 'bg-gradient-to-r from-[#25F4EE] to-[#00C8C8] text-neutral-950 font-bold shadow-md'
+                    : 'bg-gradient-to-r from-[#FE2C55] to-[#E01740] text-white shadow-md'
                   : 'text-neutral-400 hover:text-white hover:bg-neutral-800/60'
               }`}
             >
@@ -57,7 +86,9 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => onTabChange('admin')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
                 currentTab === 'admin'
-                  ? 'bg-gradient-to-r from-[#25F4EE] to-[#00C8C8] text-neutral-950 font-bold shadow-md'
+                  ? isLivia
+                    ? 'bg-gradient-to-r from-[#FE2C55] to-[#E01740] text-white font-bold shadow-md'
+                    : 'bg-gradient-to-r from-[#25F4EE] to-[#00C8C8] text-neutral-950 font-bold shadow-md'
                   : 'text-neutral-400 hover:text-white hover:bg-neutral-800/60'
               }`}
             >
