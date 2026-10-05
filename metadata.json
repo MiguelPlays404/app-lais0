@@ -1,0 +1,6 @@
+{
+  "name": "TikTok Coins Simulator & Admin",
+  "description": "Simulador de recarga de moedas TikTok para PC com conversão em dólar, popups de confirmação e painel administrativo de transações.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

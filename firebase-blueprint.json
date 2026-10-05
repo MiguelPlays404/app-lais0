@@ -1,0 +1,82 @@
+{
+  "entities": {
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Simulated TikTok coin recharge transaction to a target user",
+      "type": "object",
+      "properties": {
+        "targetUsername": {
+          "type": "string",
+          "description": "The @username of the recipient",
+          "maxLength": 60
+        },
+        "coins": {
+          "type": "number",
+          "description": "Quantity of TikTok coins sent"
+        },
+        "usdRate": {
+          "type": "number",
+          "description": "Exchange rate per coin in USD (default 1.06)"
+        },
+        "totalUsd": {
+          "type": "number",
+          "description": "Total value in USD"
+        },
+        "senderName": {
+          "type": "string",
+          "description": "Sender identifier or simulation operator",
+          "maxLength": 60
+        },
+        "status": {
+          "type": "string",
+          "description": "Transaction status",
+          "enum": ["completed", "pending", "cancelled"]
+        },
+        "note": {
+          "type": "string",
+          "description": "Optional notes or message",
+          "maxLength": 200
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp in ISO format"
+        }
+      },
+      "required": ["targetUsername", "coins", "usdRate", "totalUsd", "status", "createdAt"]
+    },
+    "Setting": {
+      "title": "Setting",
+      "description": "Global application configuration for coin values and conversion",
+      "type": "object",
+      "properties": {
+        "coinRateUsd": {
+          "type": "number",
+          "description": "Price per coin in USD"
+        },
+        "presetCoins": {
+          "type": "string",
+          "description": "JSON array of preset coin values"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last updated timestamp"
+        }
+      },
+      "required": ["coinRateUsd"]
+    }
+  },
+  "firestore": {
+    "/transactions/{transactionId}": {
+      "schema": {
+        "$ref": "#/entities/Transaction"
+      },
+      "description": "Simulated coin recharge records"
+    },
+    "/settings/{settingId}": {
+      "schema": {
+        "$ref": "#/entities/Setting"
+      },
+      "description": "System settings and defaults"
+    }
+  }
+}
